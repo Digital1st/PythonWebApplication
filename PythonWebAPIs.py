@@ -1,7 +1,7 @@
 from flask import Flask , render_template, request ,jsonify
 import sqlite3
-
-
+from datetime import datetime,timedelta
+from random import random,seed
 
 app=Flask(__name__)
 @app.route("/registration/",methods=['GET'])
@@ -42,11 +42,15 @@ def login():
 
       
         all_Users = cur.execute('SELECT * FROM Users where name=? and pass=?;',(usern,passs_)).fetchall()
+        token=random()*10000
+        now=datetime.now()
+        exp=datetime.now()+timedelta(minutes=10)
+        cur.execute("insert into Tokens values (?,?,?,?)",(token,usern,now,exp))
 
         conn.commit()
         conn.close()
 
-        return jsonify(all_Users)
+        return jsonify(token)
     else:
         return "error no it field provided"
 
@@ -86,7 +90,7 @@ def getitemslist():
        
     
 
-        all_Objects = cur.execute('SELECT * FROM Objects;').fetchall()
+        all_Objects = cur.execute('SELECT * FROM Tokens;').fetchall()
 
     return jsonify(all_Objects)        
         
@@ -103,10 +107,11 @@ def createall():
         
         cur = conn.cursor()
         cur.execute("CREATE TABLE IF NOT EXISTS Users (id integer PRIMARY KEY,name text NOT NULL,pass text,end_date text)")
-        cur.execute("CREATE TABLE IF NOT EXISTS Tokens (id integer PRIMARY KEY,name text NOT NULL,begin_date text,end_date text)")
+        cur.execute("DROP TABLE Tokens")
+        cur.execute("CREATE TABLE Tokens (name text NOT NULL,user text,begin_date text,end_date text)")
         cur.execute("CREATE TABLE IF NOT EXISTS Objects (id integer PRIMARY KEY,name text NOT NULL,begin_date text,end_date text)")
 
-        cur.execute("insert into Objects values ('15','TestObjectName','01.01.2020','01.01.9999')")
+        cur.execute("insert into Objects values ('119','TestObjectName','01.01.2020','01.01.9999')")
 
         conn.commit()
 
