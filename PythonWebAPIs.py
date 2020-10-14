@@ -1,6 +1,6 @@
 from flask import Flask , render_template, request ,jsonify
 import sqlite3
-import mysql.connector
+
 
 
 app=Flask(__name__)
@@ -9,22 +9,44 @@ app=Flask(__name__)
 
 def registration():
     if 'pass' in request.args:
-        pass_=str(request.args['pass'])
+        passs_=str(request.args['pass'])
         usern=str(request.args['uname'])
-        return "pass="+str(pass_)+ " user="+usern+ "Success"
+
+        conn = sqlite3.connect('database.db')
+        
+        cur = conn.cursor()
+        
+
+        cur.execute("insert into Users values ('111',?,?,'01.01.9999')",(usern,passs_))
+
+        conn.commit()
+        conn.close()
+
+
+
+        return "pass="+str(passs_)+ " user="+usern+ "Success"
     else:
-        return "error no it field provided"
+        return "error no pass field provided"
     return render_template('1.html')
 
 
-@app.route("/login/",methods=['POST'])
+@app.route("/login/",methods=['GET'])
 def login():
     if 'pass' in request.args:
-        pass_=str(request.args['pass'])
+        passs_=str(request.args['pass'])
         usern=str(request.args['uname'])
-    
-        print( "pass="+str(pass_)+ " user="+usern+ "Success")
-    
+        conn = sqlite3.connect('database.db')
+        
+        cur = conn.cursor()
+        
+
+      
+        all_Users = cur.execute('SELECT * FROM Users where name=? and pass=?;',(usern,passs_)).fetchall()
+
+        conn.commit()
+        conn.close()
+
+        return jsonify(all_Users)
     else:
         return "error no it field provided"
 
@@ -54,9 +76,12 @@ def deleteitem():
 def getitemslist():
     if 'token' in request.args:
         token=str(request.args['token'])
+        conn = sqlite3.connect('database.db')
+        
+        cur = conn.cursor()
+       
 
        
-       # conn.row_factory = dict_factory
         
        
     
@@ -75,18 +100,18 @@ def createall():
         token=str(request.args['token'])
 
         conn = sqlite3.connect('database.db')
-       # conn.row_factory = dict_factory
         
         cur = conn.cursor()
         cur.execute("CREATE TABLE IF NOT EXISTS Users (id integer PRIMARY KEY,name text NOT NULL,pass text,end_date text)")
         cur.execute("CREATE TABLE IF NOT EXISTS Tokens (id integer PRIMARY KEY,name text NOT NULL,begin_date text,end_date text)")
         cur.execute("CREATE TABLE IF NOT EXISTS Objects (id integer PRIMARY KEY,name text NOT NULL,begin_date text,end_date text)")
 
-        cur.execute("insert into Objects values ('1','TestUserName','PWD','01.01.9999')")
+        cur.execute("insert into Objects values ('15','TestObjectName','01.01.2020','01.01.9999')")
 
+        conn.commit()
 
-        all_Objects = cur.execute('SELECT * FROM Objects;').fetchall()
-
+        all_Objects = cur.execute('SELECT * FROM Users;').fetchall()
+        conn.close()
     return jsonify(all_Objects)        
     #else:
      #   return render_template('1.html')        
