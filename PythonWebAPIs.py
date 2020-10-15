@@ -6,7 +6,7 @@ from random import random,seed
 app=Flask(__name__)
 @app.route("/registration/",methods=['GET'])
 
-
+#function for registration of the new users
 def registration():
     if 'pass' in request.args:
         passs_=str(request.args['pass'])
@@ -29,7 +29,7 @@ def registration():
         return "error no pass field provided"
     return render_template('1.html')
 
-
+#function for login on 
 @app.route("/login/",methods=['GET'])
 def login():
     if 'pass' in request.args:
@@ -57,13 +57,26 @@ def login():
         return jsonify(token)
     else:
         return "error no it field provided"
-
+#function for creating new objects
 @app.route("/items/new/",methods=['POST'])
 def newitem():
     if 'token' in request.args:
         token=str(request.args['token'])
         objectparam=str(request.args['obparam'])
-    
+        conn = sqlite3.connect('database.db')
+        #querying tokens table to get userid
+        cur = conn.cursor()
+        all_Tokens = cur.execute('SELECT * FROM Tokens where name=?;',token).fetchall()
+        userid=all_Tokens[1][0]
+        exptime=all_Tokens[3][0]
+        #converting to datetime
+        date_time_obj = datetime.datetime.strptime(exptime, '%Y-%m-%d %H:%M:%S.%f')
+       
+        if date_time_obj.time() > datetime.now().time():
+            cur.execute("insert into Objects values ('149',objectparam['name'],userid,'01.01.9999')")
+
+            conn.commit()
+
         print( "pass="+str(pass_)+ " user="+usern+ "Success")
     
     else:
@@ -79,7 +92,7 @@ def deleteitem():
     
     else:
         return "error no it field provided"
-
+#function for querying items
 @app.route("/items/",methods=['GET'])
 def getitemslist():
     if 'token' in request.args:
@@ -88,8 +101,8 @@ def getitemslist():
         #querying tokens table to get userid
         cur = conn.cursor()
         all_Tokens = cur.execute('SELECT * FROM Tokens where name=?;',token).fetchall()
-        userid=all_Tokens[1][0]
-        exptime=all_Tokens[3][0]
+        userid=all_Tokens[0][1]
+        exptime=all_Tokens[0][3]
         #converting to datetime
         date_time_obj = datetime.datetime.strptime(exptime, '%Y-%m-%d %H:%M:%S.%f')
        
@@ -105,7 +118,7 @@ def getitemslist():
 
 
 @app.route("/create/",methods=['GET'])
-
+#creating all tables in the database
 def createall():
     if 'token' in request.args:
         token=str(request.args['token'])
