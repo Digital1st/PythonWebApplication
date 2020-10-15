@@ -42,14 +42,18 @@ def login():
 
       
         all_Users = cur.execute('SELECT * FROM Users where name=? and pass=?;',(usern,passs_)).fetchall()
-        token=random()*10000
-        now=datetime.now()
-        exp=datetime.now()+timedelta(minutes=10)
-        cur.execute("insert into Tokens values (?,?,?,?)",(token,usern,now,exp))
+        if all_Users is not None:
+            userid=all_Users[0][0]
+            token=random()*10000
+            now=datetime.now()
+            #exp is expiration timedate for token , it is for 10 minutes 
+            exp=datetime.now()+timedelta(minutes=10)
+            #inserting temporary token into tokens table
+            cur.execute("insert into Tokens values (?,?,?,?)",(token,userid,now,exp))
 
         conn.commit()
         conn.close()
-
+        #returning token
         return jsonify(token)
     else:
         return "error no it field provided"
@@ -81,16 +85,19 @@ def getitemslist():
     if 'token' in request.args:
         token=str(request.args['token'])
         conn = sqlite3.connect('database.db')
-        
+        #querying tokens table to get userid
         cur = conn.cursor()
+        all_Tokens = cur.execute('SELECT * FROM Tokens where name=?;',token).fetchall()
+        userid=all_Tokens[1][0]
+        exptime=all_Tokens[3][0]
+        #converting to datetime
+        date_time_obj = datetime.datetime.strptime(exptime, '%Y-%m-%d %H:%M:%S.%f')
        
-
-       
-        
+        if date_time_obj.time() > datetime.now().time():
        
     
-
-        all_Objects = cur.execute('SELECT * FROM Tokens;').fetchall()
+            #querying objects table for objects for only certain user
+            all_Objects = cur.execute('SELECT * FROM Objects where userid=?;',userid).fetchall()
 
     return jsonify(all_Objects)        
         
@@ -108,10 +115,10 @@ def createall():
         cur = conn.cursor()
         cur.execute("CREATE TABLE IF NOT EXISTS Users (id integer PRIMARY KEY,name text NOT NULL,pass text,end_date text)")
         cur.execute("DROP TABLE Tokens")
-        cur.execute("CREATE TABLE Tokens (name text NOT NULL,user text,begin_date text,end_date text)")
-        cur.execute("CREATE TABLE IF NOT EXISTS Objects (id integer PRIMARY KEY,name text NOT NULL,begin_date text,end_date text)")
+        cur.execute("CREATE TABLE Tokens (name text NOT NULL,userid integer,begin_date text,end_date text)")
+        cur.execute("CREATE TABLE IF NOT EXISTS Objects (id integer PRIMARY KEY,name text NOT NULL,userid integer,end_date text)")
 
-        cur.execute("insert into Objects values ('119','TestObjectName','01.01.2020','01.01.9999')")
+        cur.execute("insert into Objects values ('149','TestObjectName','01.01.2020','01.01.9999')")
 
         conn.commit()
 
