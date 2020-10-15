@@ -82,7 +82,7 @@ def newitem():
     else:
         return "error no it field provided"
 
-@app.route("/delete/",methods=['DELETE'])
+@app.route("/delete/",methods=['GET'])
 def deleteitem():
     if 'token' in request.args:
         token=str(request.args['token'])
@@ -99,17 +99,20 @@ def deleteitem():
        
     
             #deleting objects table for objects for only certain user
-            all_Objects = cur.execute('DELETE * FROM Objects where userid=?;',userid).fetchall()
+            all_Objects = cur.execute('DELETE * FROM Objects where userid=?;',userid)
+            conn.commit()
+            conn.close()
 
 #function for querying items
 @app.route("/items/",methods=['GET'])
 def getitemslist():
     if 'token' in request.args:
         token=str(request.args['token'])
+        
         conn = sqlite3.connect('database.db')
         #querying tokens table to get userid
         cur = conn.cursor()
-        all_Tokens = cur.execute('SELECT * FROM Tokens where name=?;',token).fetchall()
+        all_Tokens = cur.execute("SELECT * FROM Tokens where name=?;",token).fetchall()
         userid=all_Tokens[0][1]
         exptime=all_Tokens[0][3]
         #converting to datetime
@@ -140,7 +143,7 @@ def createall():
         cur.execute("CREATE TABLE Tokens (name text NOT NULL,userid integer,begin_date text,end_date text)")
         cur.execute("CREATE TABLE IF NOT EXISTS Objects (id integer PRIMARY KEY,name text NOT NULL,userid integer,end_date text)")
 
-        cur.execute("insert into Objects values ('149','TestObjectName','01.01.2020','01.01.9999')")
+        cur.execute("insert into Objects values ('1149','TestObjectName','01.01.2020','01.01.9999')")
 
         conn.commit()
 
