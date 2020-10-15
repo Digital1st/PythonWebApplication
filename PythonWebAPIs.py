@@ -86,12 +86,21 @@ def newitem():
 def deleteitem():
     if 'token' in request.args:
         token=str(request.args['token'])
-        id=str(request.args['id'])
+        conn = sqlite3.connect('database.db')
+        #querying tokens table to get userid
+        cur = conn.cursor()
+        all_Tokens = cur.execute('SELECT * FROM Tokens where name=?;',token).fetchall()
+        userid=all_Tokens[0][1]
+        exptime=all_Tokens[0][3]
+        #converting to datetime
+        date_time_obj = datetime.datetime.strptime(exptime, '%Y-%m-%d %H:%M:%S.%f')
+       
+        if date_time_obj.time() > datetime.now().time():
+       
     
-        print( "pass="+str(pass_)+ " user="+usern+ "Success")
-    
-    else:
-        return "error no it field provided"
+            #deleting objects table for objects for only certain user
+            all_Objects = cur.execute('DELETE * FROM Objects where userid=?;',userid).fetchall()
+
 #function for querying items
 @app.route("/items/",methods=['GET'])
 def getitemslist():
